@@ -37,7 +37,6 @@ contract Minisig {
         // set domain separator for EIP712 signatures
         uint256 chainId;
         assembly { chainId := chainid() }
-
         DOMAIN_SEPARATOR = keccak256(abi.encode(
             DOMAIN_SEPARATOR_TYPEHASH,
             chainId,
@@ -55,102 +54,6 @@ contract Minisig {
         // set threshold and valid signers
         threshold = _threshold;
         signers = _signers;
-    }
-
-    function getDigest(
-        address _target,
-        CallType _callType,
-        uint256 _txGas,
-        uint256 _value,
-        bytes calldata _data
-    )
-        external
-        view
-        returns (bytes32 digest)
-    {
-        digest = keccak256(abi.encodePacked(
-            // byte(0x19), byte(0x01)
-            "\x19\x01",
-            DOMAIN_SEPARATOR,
-            keccak256(abi.encode(
-                EXECUTE_TYPEHASH,
-                _target,
-                _callType,
-                nonce,
-                _txGas,
-                _value,
-                keccak256(_data)
-            ))
-        ));
-    }
-
-    function recover(
-        address _target,
-        CallType _callType,
-        uint256 _txGas,
-        uint256 _value,
-        bytes calldata _data,
-        bytes calldata _sigs
-    )
-        external
-        view
-        returns (bytes32)
-    {
-        // must submit enough signatures to satisfy threshold
-        // max(uint8) * 65 << max(uint256), so no overflow check
-        require(_sigs.length >= uint256(threshold) * 65, "sigs-invalid-length");
-        uint256 origNonce = nonce;
-
-        // signed message hash
-        bytes32 digest = keccak256(abi.encodePacked(
-            // byte(0x19), byte(0x01)
-            "\x19\x01",
-            DOMAIN_SEPARATOR,
-            keccak256(abi.encode(
-                EXECUTE_TYPEHASH,
-                _target,
-                _callType,
-                origNonce,
-                _txGas,
-                _value,
-                keccak256(_data)
-            ))
-        ));
-
-        // check signature validity
-        // Note: a single invalid sig will cause a revert, even if there are
-        // `>= threshold` valid sigs. But, an invalid sig after `threshold`
-        // valid sigs is ignored
-        uint256 signerIdx = 0;
-        for (uint256 i = 0; i < threshold; i++) {
-            // sig should be 65 bytes total, {32 byte r}{32 byte s}{1 byte v}
-            uint256 sigIdx = 65 * i;
-            bytes32 r = abi.decode(_sigs[ sigIdx : sigIdx + 32 ], (bytes32));
-            bytes32 s = abi.decode(_sigs[ sigIdx + 32 : sigIdx + 64 ], (bytes32));
-            uint8 v = uint8(_sigs[ sigIdx + 64 ]);
-            address addr = ecrecover(digest, v, r, s);
-
-            // return digest;
-            return bytes32(bytes20(addr));
-            // return r;
-
-            // for current signerIdx to end of signers, check each signer against
-            // recovered address.
-            // If we exhaust the list without a match, revert
-            // if we find a match, signerIdx = match index, continue looping through sigs
-            bool elem = false;
-            for (uint256 j = signerIdx; j < signers.length && !elem; j++) {
-                if (addr == signers[j]) {
-                    elem = true;
-                    signerIdx = j + 1;
-                    ///
-                    return bytes32(bytes20(addr));
-                    ///
-                    // break
-                }
-            }
-            require(elem, "not-signer");
-        }
     }
 
     function execute(

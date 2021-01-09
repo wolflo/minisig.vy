@@ -5,7 +5,6 @@ import brownie
 import eth_event
 
 from brownie.network.event import eth_event, EventDict
-# from brownie.network.event import EventDict
 
 import utils.utils as utils
 import utils.constants as C

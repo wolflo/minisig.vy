@@ -10,10 +10,6 @@ def isolate(fn_isolation):
     pass
 
 @pytest.fixture(scope="module")
-def msig(Minisig, accounts, deployer, usr_ids):
-    return Minisig.deploy(C.THRESHOLD, usr_ids, {'from': deployer})
-
-@pytest.fixture(scope="module")
 def mock(TargetMock, accounts, deployer):
     return TargetMock.deploy({'from': deployer})
 
@@ -33,3 +29,9 @@ def usr_ids(usrs):
 @pytest.fixture
 def anyone(accounts):
     return accounts[0]
+
+# @pytest.fixture(scope="module")
+# def msig(Minisig, accounts, deployer, usr_ids):
+#     return Minisig.deploy(C.THRESHOLD, usr_ids, {'from': deployer})
+
+

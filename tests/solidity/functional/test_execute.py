@@ -1,6 +1,5 @@
 import pytest
 import brownie
-# import eth_event
 
 from brownie.network.event import eth_event, EventDict
 

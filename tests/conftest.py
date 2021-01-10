@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import pytest
 
 import utils.constants as C
@@ -10,7 +8,7 @@ def isolate(fn_isolation):
     pass
 
 @pytest.fixture(scope="module")
-def mock(TargetMock, accounts, deployer):
+def mock(TargetMock, deployer):
     return TargetMock.deploy({'from': deployer})
 
 @pytest.fixture(scope="module")
@@ -18,7 +16,7 @@ def deployer(accounts):
     return accounts[1]
 
 @pytest.fixture(scope="module")
-def usrs(accounts):
+def usrs():
     unsorted = utils.derive_accts(C.MNEMONIC, C.NUM_SIGNERS)
     return sorted(unsorted, key = lambda x: x.address)
 

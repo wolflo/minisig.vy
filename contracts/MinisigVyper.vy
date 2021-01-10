@@ -1,23 +1,24 @@
 # @version ^0.2.0
 
-MAX_UINT8: constant(uint256) = 255
 NUM_SIGNERS: constant(uint256) = 3
+MAX_UINT8: constant(uint256) = 255
 
-
-# EIP712 stuff
-DOMAIN_SEPARATOR: public(bytes32)
+# --- EIP712 ---
+DOMAIN_SEPARATOR: public(bytes32) # immutable
 # keccak256("EIP712Domain(uint256 chainId,uint256 deployBlock,address verifyingContract)");
 DOMAIN_SEPARATOR_TYPEHASH: constant(bytes32) = 0x0a684fcd4736a0673611bfe1e61ceb93fb09bcd288bc72c1155ebe13280ffeca
 # keccak256("Execute(address target,uint8 callType,uint256 nonce,uint256 txGas,uint256 value,bytes data)");
 EXECUTE_TYPEHASH: constant(bytes32) = 0x9c1370cbf5462da152553d1b9556f96a7eb4dfe28fbe07e763227834d409103a
 
+# --- State ---
 nonce: public(uint256)
-threshold: public(uint256) # uint8
 
-# signers: address[]
+# --- Immutable ---
+threshold: public(uint256) # uint8, immutable
 numSigners: uint256
-signers: address[NUM_SIGNERS]
+signers: address[NUM_SIGNERS] # signers: address[]
 
+# --- Constructor ---
 @external
 def __init__(_threshold: uint256, _signers: address[NUM_SIGNERS]):
     assert _threshold <= MAX_UINT8
@@ -34,16 +35,19 @@ def __init__(_threshold: uint256, _signers: address[NUM_SIGNERS]):
     )
 
     prevSigner: address = ZERO_ADDRESS
-    for signer in self.signers:
+    for signer in _signers:
         assert convert(signer, uint256) > convert(prevSigner, uint256)
         prevSigner = signer
 
     self.threshold = _threshold
     self.signers = _signers
 
+# --- Fallback function ---
 @external
-def allSigners() -> address[NUM_SIGNERS]:
-    return self.signers
+@payable
+def __default__():
+    return
+
 
 @external
 @payable
@@ -56,6 +60,7 @@ def execute(
     _sigs: Bytes[65*NUM_SIGNERS]
 ) -> bool:
     assert len(_sigs) >= self.threshold
+    assert _callType == 0 or _callType == 1
 
     origNonce: uint256 = self.nonce
     newNonce:uint256 = origNonce + 1
@@ -104,5 +109,28 @@ def execute(
     assert count == self.threshold
 
     # make call
+    # delegatecall
+    if _callType == 1:
+        retdata: Bytes[MAX_UINT8] = raw_call(_target,
+                                             _data,
+                                             max_outsize=MAX_UINT8,
+                                             gas=_gas,
+                                             value=_value,
+                                             is_delegate_call = True)
+        assert self.nonce == newNonce
+    # call
+    else:
+        retdata: Bytes[MAX_UINT8] = raw_call(_target,
+                                             _data,
+                                             max_outsize=MAX_UINT8,
+                                             gas=_gas,
+                                             value=_value)
 
     return True
+
+
+# return signers array
+@external
+@view
+def allSigners() -> address[NUM_SIGNERS]:
+    return self.signers

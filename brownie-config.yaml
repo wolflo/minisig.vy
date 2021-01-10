@@ -11,3 +11,5 @@ compiler:
     optimizer:
       enabled: true
       runs: 200
+  vyper:
+      version: 0.2.8

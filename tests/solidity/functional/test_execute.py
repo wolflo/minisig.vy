@@ -1,15 +1,11 @@
-#!/usr/bin/python3
-
 import pytest
 import brownie
-import eth_event
+# import eth_event
 
 from brownie.network.event import eth_event, EventDict
 
 import utils.utils as utils
 import utils.constants as C
-
-web3 = brownie.network.web3
 
 # TODO: can't seem to send actually empty data
 def test_empty_call(msig, mock, usrs):
@@ -27,8 +23,9 @@ def test_empty_call(msig, mock, usrs):
         value,
         data
     )
-    call = tx.events[-1]
 
+    assert msig.nonce() == 1
+    call = tx.events[-1]
     assert call['src'] == msig.address
     assert call['context'] == mock.address
     assert call['gas'] <= call_gas
@@ -54,6 +51,7 @@ def test_call_w_value(msig, mock, usrs):
     )
     call = tx.events[-1]
 
+    assert msig.nonce() == 1
     assert call['src'] == msig.address
     assert call['context'] == mock.address
     assert call['gas'] <= call_gas + 2300
@@ -81,8 +79,9 @@ def test_call_no_value(msig, mock, usrs, anyone):
     )
     call = tx.events[-1]
 
-    print(f'type: {type(call)}')
+    # print(f'type: {type(call)}')
 
+    assert msig.nonce() == 1
     assert call['src'] == msig.address
     assert call['context'] == mock.address
     assert call['gas'] <= call_gas + 2300
@@ -110,12 +109,7 @@ def test_empty_delegatecall(msig, mock, usrs):
     events = EventDict(logs)
     call = events[-1]
 
-    print(f'call event: {call}')
-    print(f'sender: {tx.sender}')
-    print(f'msig: {msig.address}')
-    print(f'mock: {mock.address}')
-
-
+    assert msig.nonce() == 1
     assert call['src'] == tx.sender
     # to checksum address
     assert brownie.convert.to_address(call['context']) == msig.address

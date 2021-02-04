@@ -28,8 +28,8 @@ def usr_ids(usrs):
 def anyone(accounts):
     return accounts[0]
 
-# @pytest.fixture(scope="module")
-# def msig(Minisig, accounts, deployer, usr_ids):
-#     return Minisig.deploy(C.THRESHOLD, usr_ids, {'from': deployer})
-
-
+@pytest.fixture(scope="module")
+def msig(Minisig, deployer, usr_ids):
+    assert C.THRESHOLD == 3
+    assert len(usr_ids) == 3  # hardcode errrythang
+    return Minisig.deploy(C.THRESHOLD, usr_ids, {'from': deployer})

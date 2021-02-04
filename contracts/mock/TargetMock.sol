@@ -25,6 +25,8 @@ contract TargetMock {
         assembly { sstore(key, val) }
     }
 
+    function fail() external { revert(); }
+
     receive() external payable logs {}
     fallback() external payable logs {}
 }

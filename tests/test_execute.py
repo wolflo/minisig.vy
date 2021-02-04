@@ -6,14 +6,14 @@ from brownie.network.event import eth_event, EventDict
 import utils.utils as utils
 import utils.constants as C
 
-def test_empty_call(msigv, mock, usrs):
+def test_empty_call(msig, mock, usrs):
     call_type = 0
     call_gas = 3000
     value = 0
     data = '0x00'
 
     tx = utils.signAndExecute(
-        msigv,
+        msig,
         usrs,
         mock.address,
         call_type,
@@ -23,14 +23,14 @@ def test_empty_call(msigv, mock, usrs):
     )
     call = tx.events[-1]
 
-    assert msigv.nonce() == 1
-    assert call['src'] == msigv.address
+    assert msig.nonce() == 1
+    assert call['src'] == msig.address
     assert call['context'] == mock.address
     assert call['gas'] <= call_gas
     assert call['val'] == value
     assert call['data'] == data
 
-def test_call_w_value(msigv, mock, usrs):
+def test_call_w_value(msig, mock, usrs):
     call_type = 0
     call_gas = 3000
     value = 1
@@ -38,7 +38,7 @@ def test_call_w_value(msigv, mock, usrs):
     tx_value = 10
 
     tx = utils.signAndExecute(
-        msigv,
+        msig,
         usrs,
         mock.address,
         call_type,
@@ -49,25 +49,25 @@ def test_call_w_value(msigv, mock, usrs):
     )
     call = tx.events[-1]
 
-    assert msigv.nonce() == 1
-    assert call['src'] == msigv.address
+    assert msig.nonce() == 1
+    assert call['src'] == msig.address
     assert call['context'] == mock.address
     assert call['gas'] <= call_gas + 2300
     assert call['val'] == value
     assert call['data'] == data
-    assert msigv.balance() == tx_value - value
+    assert msig.balance() == tx_value - value
 
-def test_call_no_value(msigv, mock, usrs, anyone):
+def test_call_no_value(msig, mock, usrs, anyone):
     call_type = 0
     call_gas = 3000
     value = 2
     data = '0xabababab'
 
-    anyone.transfer(msigv.address, 10)
-    bal0 = msigv.balance()
+    anyone.transfer(msig.address, 10)
+    bal0 = msig.balance()
 
     tx = utils.signAndExecute(
-        msigv,
+        msig,
         usrs,
         mock.address,
         call_type,
@@ -77,23 +77,23 @@ def test_call_no_value(msigv, mock, usrs, anyone):
     )
     call = tx.events[-1]
 
-    assert msigv.nonce() == 1
-    assert call['src'] == msigv.address
+    assert msig.nonce() == 1
+    assert call['src'] == msig.address
     assert call['context'] == mock.address
     assert call['gas'] <= call_gas + 2300
     assert call['val'] == value
     assert call['data'] == data
-    assert msigv.balance() == bal0 - value
+    assert msig.balance() == bal0 - value
 
 # TODO: can't seem to send actually empty data
-def test_empty_delegatecall(msigv, mock, usrs):
+def test_empty_delegatecall(msig, mock, usrs):
     call_type = 1
     call_gas = 3000
     value = 0
     data = '0x00'
 
     tx = utils.signAndExecute(
-        msigv,
+        msig,
         usrs,
         mock.address,
         call_type,
@@ -105,10 +105,10 @@ def test_empty_delegatecall(msigv, mock, usrs):
     events = EventDict(logs)
     call = events[-1]
 
-    assert msigv.nonce() == 1
+    assert msig.nonce() == 1
     assert call['src'] == tx.sender
     # to checksum address
-    assert brownie.convert.to_address(call['context']) == msigv.address
+    assert brownie.convert.to_address(call['context']) == msig.address
     assert call['gas'] <= call_gas
     assert call['val'] == 0
     assert call['data'] == data
